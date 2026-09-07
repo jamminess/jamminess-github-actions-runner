@@ -63,7 +63,7 @@ runs:
           --set 'generic-service.image.tag=${{ inputs.version }}' \
           --set 'version=${{ inputs.version }}' \
           --timeout 10m \
-          --values 'helm_deploy/value${{ inputs.environment }}' \
+          --values 'helm_deploy/values-${{ inputs.environment }}' \
           --wait \
           --set generic-service.env.RUNNER_LABEL="${{ inputs.runner_label }}" \
           --set generic-service.env.RUNNER_GROUP="${{ inputs.runner_group }}" \
