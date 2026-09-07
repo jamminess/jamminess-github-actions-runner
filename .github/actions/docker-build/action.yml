@@ -12,8 +12,6 @@ inputs:
     default: 'false'
   version:
     description: Version
-  gh_auth_token:
-    description: GitHub token
 
 runs:
   using: "composite"
@@ -39,5 +37,3 @@ runs:
           ghcr.io/jamminess/${{ inputs.project }}:latest
           ghcr.io/jamminess/${{ inputs.project }}:latest-prod
           ghcr.io/jamminess/${{ inputs.project }}:${{ inputs.version }}
-      env:
-        GH_AUTH_TOKEN: ${{ inputs.gh_auth_token }}
