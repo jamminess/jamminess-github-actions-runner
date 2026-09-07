@@ -1,0 +1,54 @@
+---
+generic-service:
+  nameOverride: jamminess-github-actions-runner
+
+  replicaCount: 6 # more e2e tests than before
+
+  image:
+    repository: ghcr.io/jamminess/jamminess-github-actions-runner
+    tag: xxx    # override at deployment time
+    port: 8080
+
+  ingress:
+    enabled: false
+
+  # Due to a bug cant disable/override the sub chart.
+  # https://github.com/helm/helm/pull/12162
+  # Looks like it might be fixed, so...
+
+  livenessProbe: null
+
+  readinessProbe:
+    httpGet: null
+    exec:
+      command:
+        - cat
+        - /tmp/runner.ready
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 5
+
+  env:
+    GH_APP_PRIVATE_KEY_PATH: /var/run/secrets/github-app/private-key.pem
+
+  namespace_secrets:
+    jamminess-github-actions-runner:
+      GH_APP_ID: GH_APP_ID
+
+  volumes:
+    - name: github-app-key
+      secret:
+        secretName: jamminess-github-actions-runner
+        items:
+          - key: GH_APP_PRIVATE_KEY
+            path: private-key.pem
+        defaultMode: 0400
+
+  volumeMounts:
+    - name: github-app-key
+      mountPath: /var/run/secrets/github-app
+      readOnly: true
+
+generic-prometheus-alerts:
+  targetApplication: jamminess-github-actions-runner

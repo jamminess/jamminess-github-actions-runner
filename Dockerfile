@@ -1,0 +1,79 @@
+#checkov:skip=CKV_DOCKER_2:actions/runner does not provider a mechanism for checking the health of the service
+FROM debian:bookworm-slim
+
+LABEL org.opencontainers.image.vendor="Ministry of Justice" \
+      org.opencontainers.image.authors="HMPPS DPS" \
+      org.opencontainers.image.title="Actions Runner" \
+      org.opencontainers.image.description="Actions Runner image for HMPPS DPS" \
+      org.opencontainers.image.url="https://github.com/jamminess/jamminess-github-actions-runner"
+
+ENV CONTAINER_USER="runner" \
+    CONTAINER_UID="10000" \
+    CONTAINER_GROUP="runner" \
+    CONTAINER_GID="10000" \
+    CONTAINER_HOME="/actions-runner" \
+    PLAYWRIGHT_BROWSERS_PATH="/opt/playwright" \
+    DEBIAN_FRONTEND="noninteractive" \
+    LANG=en_US.UTF-8 \
+    LANGUAGE=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    DUMB_INIT_VERSION="1.2.2" \
+    GIT_LFS_VERSION="3.7.1" \
+    ORACLE_CLIENT_VERSION="23.26.2.0.0" \
+    ORACLE_CLIENT_BUILD="2326200"
+
+# Checked by renovate
+ENV ACTIONS_RUNNER_VERSION="2.336.0"
+
+SHELL ["/bin/bash", "-e", "-u", "-o", "pipefail", "-c"]
+
+COPY --chmod=700 build/ /tmp/build/
+
+# Install base tools and configure sources (cacheable layer)
+# Cache package lists and downloaded .deb files to avoid re-downloading on rebuilds
+# Pattern from: https://docs.docker.com/reference/dockerfile/#example-cache-apt-packages
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    /tmp/build/install_base.sh
+
+# Create user and directories (stable layer)
+RUN groupadd \
+      --gid ${CONTAINER_GID} \
+      --system \
+      ${CONTAINER_GROUP} && \
+    useradd \
+      --uid ${CONTAINER_UID} \
+      --gid ${CONTAINER_GROUP} \
+      --create-home \
+      ${CONTAINER_USER} && \
+    mkdir --parents ${CONTAINER_HOME} && \
+    mkdir --parents ${PLAYWRIGHT_BROWSERS_PATH} && \
+    chown --recursive ${CONTAINER_USER}:${CONTAINER_GROUP} ${PLAYWRIGHT_BROWSERS_PATH} && \
+    chown --recursive ${CONTAINER_USER}:${CONTAINER_GROUP} ${CONTAINER_HOME}
+
+# Download and install GitHub Actions runner (changes frequently with ACTIONS_RUNNER_VERSION)
+RUN curl --location "https://github.com/actions/runner/releases/download/v${ACTIONS_RUNNER_VERSION}/actions-runner-linux-x64-${ACTIONS_RUNNER_VERSION}.tar.gz" \
+      --output "actions-runner-linux-x64-${ACTIONS_RUNNER_VERSION}.tar.gz" && \
+    ACTIONS_RUNNER_PKG_SHA=$(curl -s --location "https://github.com/actions/runner/releases/tag/v${ACTIONS_RUNNER_VERSION}" | grep -A10 "SHA-256 Checksums" | grep actions-runner-linux-x64-${ACTIONS_RUNNER_VERSION} | awk -F'[<> ]' '{print $4}') && \
+    echo "Release ACTIONS_RUNNER_PKG_SHA   : ${ACTIONS_RUNNER_PKG_SHA}" && \
+    echo "Downloaded ACTIONS_RUNNER_PKG_SHA: $(sha256sum -b actions-runner-linux-x64-${ACTIONS_RUNNER_VERSION}.tar.gz | cut -d\  -f1)" && \
+    echo "${ACTIONS_RUNNER_PKG_SHA}  actions-runner-linux-x64-${ACTIONS_RUNNER_VERSION}.tar.gz" | /usr/bin/sha256sum --check && \
+    tar --extract --gzip --file="actions-runner-linux-x64-${ACTIONS_RUNNER_VERSION}.tar.gz" --directory="${CONTAINER_HOME}" && \
+    rm --force "actions-runner-linux-x64-${ACTIONS_RUNNER_VERSION}.tar.gz"
+
+COPY --chown=nobody:nobody --chmod=0755 src/usr/local/bin/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --chown=nobody:nobody --chmod=0755 src/usr/local/bin/job-started.sh /usr/local/bin/job-started.sh
+COPY --chown=nobody:nobody --chmod=0755 src/usr/local/bin/job-completed.sh /usr/local/bin/job-completed.sh
+
+# Configure runner job lifecycle hooks for persistent (non-ephemeral) runners.
+# These scripts run before/after every job to clean up state that actions leave
+# behind (e.g. gradle/actions/setup-gradle init scripts in ~/.gradle/init.d/).
+# See: https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/running-scripts-before-or-after-a-job
+ENV ACTIONS_RUNNER_HOOK_JOB_STARTED=/usr/local/bin/job-started.sh \
+    ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/usr/local/bin/job-completed.sh
+
+USER ${CONTAINER_UID}
+
+WORKDIR ${CONTAINER_HOME}
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

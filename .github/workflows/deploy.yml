@@ -1,0 +1,54 @@
+name: Deploy the runner cluster
+
+on:
+  workflow_dispatch:
+    inputs:      
+      environment:
+        description: The name of the environment to deploy to (dev/prod)
+        type: string
+        required: true
+        default: 'dev'
+      version:
+        description: The image version to deploy
+        type: string
+        default: 'latest'
+        required: true
+  workflow_call:
+    inputs:      
+      environment:
+        description: The name of the environment to deploy to (dev/prod)
+        type: string
+        default: 'dev'
+        required: true
+      version:
+        description: The image version to deploy
+        type: string
+        default: 'latest'
+        required: true
+
+jobs:
+  deploy:
+    name: Deploy Github runner to ${{ inputs.environment }}
+    permissions:
+      contents: read
+      pull-requests: write
+      deployments: write
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Deploy to Cloud Platforms - prod
+        uses: ./.github/actions/cloud-platform-deploy
+        with:
+          environment: ${{ inputs.environment }}
+          version: ${{ inputs.version }}
+          api: https://${{ secrets.KUBE_CLUSTER }}
+          cert: ${{ secrets.KUBE_CERT }}
+          cluster: ${{ secrets.KUBE_CLUSTER }}
+          namespace: ${{ secrets.KUBE_NAMESPACE }}
+          token: ${{ secrets.KUBE_TOKEN }}   
+          github_org: ${{ github.repository_owner }}
+          runner_label: ${{ vars.RUNNER_LABEL }}
+          runner_group: ${{ vars.RUNNER_GROUP }}
+

@@ -1,0 +1,57 @@
+name: Build -> Deploy runner pipeline
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'fix/**'
+
+  pull_request:
+    branches:
+      - 'main'
+
+  schedule:
+    - cron: "10 18,04 * * *" 
+
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  build-runner:
+    name: Build the latest Github Actions Runner image
+    permissions:
+      contents: read
+      pull-requests: write
+      deployments: write
+      packages: write
+    uses: ./.github/workflows/build-runner.yml
+    with:
+      push: ${{ github.ref == 'refs/heads/main' }}
+    secrets: inherit 
+    
+  # Only need to deploy to dev nowadays
+  deploy-to-dev:
+    name: Deploy to dev
+    permissions:
+      contents: read
+      deployments: write
+      pull-requests: write
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/deploy.yml
+    needs: build-runner
+    with:
+      environment: 'dev'
+      version: ${{ needs.build-runner.outputs.version }}
+    secrets: inherit
+
+  runner-cleanup:
+    name: remove the remaining runners
+    needs: deploy-to-dev
+    uses: ./.github/workflows/runner-cleanup.yml
+    secrets: inherit 
+    permissions:
+      contents: read
+      pull-requests: write
