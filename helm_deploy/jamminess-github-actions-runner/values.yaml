@@ -2,7 +2,7 @@
 generic-service:
   nameOverride: jamminess-github-actions-runner
 
-  replicaCount: 6 # more e2e tests than before
+  replicaCount: 1 # more e2e tests than before
 
   image:
     repository: ghcr.io/jamminess/jamminess-github-actions-runner
