@@ -30,7 +30,6 @@ jobs:
     uses: ./.github/workflows/build-runner.yml
     with:
       push: ${{ github.ref == 'refs/heads/main' }}
-    secrets: inherit 
     
   # Only need to deploy to dev nowadays
   deploy-to-dev:
@@ -45,7 +44,6 @@ jobs:
     with:
       environment: 'dev'
       version: ${{ needs.build-runner.outputs.version }}
-    secrets: inherit
 
   runner-cleanup:
     name: remove the remaining runners
