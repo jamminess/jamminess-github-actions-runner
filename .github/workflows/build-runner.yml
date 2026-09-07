@@ -43,8 +43,7 @@ jobs:
           project: 'jamminess-github-actions-runner'
           push: ${{ inputs.push }}
           version: ${{ steps.app_version.outputs.version }}
-
-
+  
   delete-old-runner-images:
     runs-on: ubuntu-latest
     if: inputs.push == true
