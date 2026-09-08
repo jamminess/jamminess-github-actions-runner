@@ -1,10 +1,10 @@
 #checkov:skip=CKV_DOCKER_2:actions/runner does not provider a mechanism for checking the health of the service
 FROM debian:bookworm-slim
 
-LABEL org.opencontainers.image.vendor="Ministry of Justice" \
-      org.opencontainers.image.authors="HMPPS DPS" \
+LABEL org.opencontainers.image.vendor="jamminess" \
+      org.opencontainers.image.authors="jamminess DPS" \
       org.opencontainers.image.title="Actions Runner" \
-      org.opencontainers.image.description="Actions Runner image for HMPPS DPS" \
+      org.opencontainers.image.description="Actions Runner image for jamminess" \
       org.opencontainers.image.url="https://github.com/jamminess/jamminess-github-actions-runner"
 
 ENV CONTAINER_USER="runner" \
@@ -23,7 +23,7 @@ ENV CONTAINER_USER="runner" \
     ORACLE_CLIENT_BUILD="2326200"
 
 # Checked by renovate
-ENV ACTIONS_RUNNER_VERSION="2.336.0"
+ENV ACTIONS_RUNNER_VERSION="2.337.0"
 
 SHELL ["/bin/bash", "-e", "-u", "-o", "pipefail", "-c"]
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "Starting token registration"
+
 # Required env:
 #   GH_APP_ID                e.g. 123456
 #   GH_ORG                   e.g. jamminess

@@ -3,6 +3,7 @@
 set -euo pipefail
 
 # Get the token
+echo "Getting token..."
 source /usr/local/bin/get_token.sh
 
 
