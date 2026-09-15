@@ -12,7 +12,12 @@ inputs:
     default: 'false'
   version:
     description: Version
-
+  no-cache:
+    description: Whether to disable Docker build cache
+    default: 'false'
+  pull:
+    description: Whether to pull newer base image layers
+    default: 'false'
 runs:
   using: "composite"
   steps:
@@ -32,6 +37,8 @@ runs:
         context: .
         file: ${{ inputs.dockerfile}}
         push: ${{ inputs.push }}
+        no-cache: ${{ inputs.no-cache }}
+        pull: ${{ inputs.pull }}
         provenance: false
         tags: |
           ghcr.io/jamminess/${{ inputs.project }}:latest
