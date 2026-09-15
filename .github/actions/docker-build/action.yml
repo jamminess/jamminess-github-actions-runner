@@ -12,12 +12,7 @@ inputs:
     default: 'false'
   version:
     description: Version
-  no-cache:
-    description: Whether to disable Docker build cache
-    default: 'false'
-  pull:
-    description: Whether to pull newer base image layers
-    default: 'false'
+
 runs:
   using: "composite"
   steps:
@@ -34,11 +29,11 @@ runs:
       with:
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        build-args: |
+          SECURITY_PATCH_EPOCH=${{ github.run_id }}
         context: .
         file: ${{ inputs.dockerfile}}
         push: ${{ inputs.push }}
-        no-cache: ${{ inputs.no-cache }}
-        pull: ${{ inputs.pull }}
         provenance: false
         tags: |
           ghcr.io/jamminess/${{ inputs.project }}:latest

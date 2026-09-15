@@ -7,14 +7,6 @@ on:
         description: Whether to push the built image to registry
         type: boolean
         default: false
-      no-cache:
-        description: Whether to disable Docker build cache
-        type: boolean
-        default: false
-      pull:
-        description: Whether to pull newer base image layers
-        type: boolean
-        default: false
 
     outputs:
       version:
@@ -25,14 +17,6 @@ on:
     inputs:
       push:
         description: Whether to push the built image to registry
-        type: boolean
-        default: false
-      no-cache:
-        description: Whether to disable Docker build cache
-        type: boolean
-        default: false
-      pull:
-        description: Whether to pull newer base image layers
         type: boolean
         default: false
 
@@ -59,8 +43,6 @@ jobs:
           project: 'jamminess-github-actions-runner'
           push: ${{ inputs.push }}
           version: ${{ steps.app_version.outputs.version }}
-          no-cache: ${{ inputs.no-cache }}
-          pull: ${{ inputs.pull }}
   
   delete-old-runner-images:
     runs-on: ubuntu-latest
